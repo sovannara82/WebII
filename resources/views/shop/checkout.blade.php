@@ -1,6 +1,6 @@
-@extends('layouts.app')
+@extends('layouts.customer')
 
-@section('title', 'Checkout - KRUY')
+@section('title', 'Checkout - Infinity Figures')
 
 @section('content')
     <section class="container py-5">

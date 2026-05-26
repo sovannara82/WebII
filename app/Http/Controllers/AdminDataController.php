@@ -26,8 +26,11 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Rules\Unique;
 
 class AdminDataController extends Controller
 {
@@ -58,6 +61,43 @@ class AdminDataController extends Controller
         'order_coupons' => null,
     ];
 
+    /**
+     * @var list<string>
+     */
+    private array $creatableTables = [
+        'roles',
+        'users',
+        'categories',
+        'brands',
+        'products',
+        'product_images',
+        'tags',
+        'order_statuses',
+        'payment_statuses',
+        'payment_methods',
+        'banners',
+        'coupons',
+    ];
+
+    /**
+     * @var list<string>
+     */
+    private array $editableTables = [
+        'roles',
+        'users',
+        'categories',
+        'brands',
+        'products',
+        'product_images',
+        'tags',
+        'product_tags',
+        'order_statuses',
+        'payment_statuses',
+        'payment_methods',
+        'banners',
+        'coupons',
+    ];
+
     public function __construct()
     {
         $this->middleware('auth');
@@ -75,7 +115,8 @@ class AdminDataController extends Controller
 
         return view('admin.data', [
             'columns' => Schema::getColumnListing($table),
-            'creatableTables' => ['roles', 'categories', 'brands', 'tags', 'order_statuses', 'payment_statuses', 'payment_methods', 'banners', 'coupons'],
+            'creatableTables' => $this->creatableTables,
+            'editableTables' => $this->editableTables,
             'records' => $records,
             'table' => $table,
             'tables' => array_keys($this->models),
@@ -95,6 +136,26 @@ class AdminDataController extends Controller
         return back()->with('status', "{$table} record created.");
     }
 
+    public function update(Request $request, string $table, string $id): RedirectResponse
+    {
+        abort_unless(array_key_exists($table, $this->models), 404);
+        abort_unless(in_array($table, $this->editableTables, true), 422, 'This table is read-only from the generic admin screen.');
+
+        if ($table === 'product_tags') {
+            $this->updateProductTag($request, $id);
+
+            return back()->with('status', "{$table} record updated.");
+        }
+
+        $model = $this->models[$table];
+        abort_unless($model, 422, 'This table is read-only from the generic admin screen.');
+
+        $record = $model::findOrFail($id);
+        $record->update($this->validatedData($request, $table, $record));
+
+        return back()->with('status', "{$table} record updated.");
+    }
+
     public function destroy(string $table, int $id): RedirectResponse
     {
         abort_unless(array_key_exists($table, $this->models), 404);
@@ -110,38 +171,141 @@ class AdminDataController extends Controller
     /**
      * @return array<string, mixed>
      */
-    private function validatedData(Request $request, string $table): array
+    private function validatedData(Request $request, string $table, ?Model $record = null): array
     {
-        return match ($table) {
-            'roles' => $request->validate(['name' => ['required', 'max:50', Rule::unique('roles', 'name')]]),
+        $data = match ($table) {
+            'roles' => $request->validate(['name' => ['required', 'max:50', $this->uniqueRule('roles', 'name', $record)]]),
+            'users' => $request->validate([
+                'role_id' => ['nullable', 'integer', Rule::exists('roles', 'id')],
+                'name' => ['required', 'max:255'],
+                'username' => ['nullable', 'max:50', $this->uniqueRule('users', 'username', $record)],
+                'email' => ['required', 'email', 'max:255', $this->uniqueRule('users', 'email', $record)],
+                'password' => [$record ? 'nullable' : 'required', 'string', 'min:8'],
+                'phone' => ['nullable', 'max:20'],
+                'image' => ['nullable', 'image', 'max:4096'],
+                'address' => ['nullable', 'max:255'],
+                'city' => ['nullable', 'max:100'],
+                'province' => ['nullable', 'max:100'],
+            ]),
             'categories' => $request->validate([
-                'name' => ['required', 'max:100', Rule::unique('categories', 'name')],
+                'name' => ['required', 'max:100', $this->uniqueRule('categories', 'name', $record)],
                 'description' => ['nullable', 'max:255'],
-                'image' => ['nullable', 'max:255'],
-            ]) + ['user_id' => $request->user()->id],
+                'image' => ['nullable', 'image', 'max:4096'],
+            ]),
             'brands' => $request->validate([
-                'name' => ['required', 'max:100', Rule::unique('brands', 'name')],
-                'image' => ['nullable', 'max:255'],
-            ]) + ['user_id' => $request->user()->id],
-            'tags' => $request->validate(['name' => ['required', 'max:50', Rule::unique('tags', 'name')]]) + ['user_id' => $request->user()->id],
-            'order_statuses' => $request->validate(['name' => ['required', 'max:30', Rule::unique('order_statuses', 'name')]]) + ['user_id' => $request->user()->id],
-            'payment_statuses' => $request->validate(['name' => ['required', 'max:30', Rule::unique('payment_statuses', 'name')]]) + ['user_id' => $request->user()->id],
-            'payment_methods' => $request->validate(['name' => ['required', 'max:50', Rule::unique('payment_methods', 'name')]]) + ['user_id' => $request->user()->id],
+                'name' => ['required', 'max:100', $this->uniqueRule('brands', 'name', $record)],
+                'image' => ['nullable', 'image', 'max:4096'],
+            ]),
+            'products' => $request->validate([
+                'category_id' => ['required', 'integer', Rule::exists('categories', 'id')],
+                'brand_id' => ['nullable', 'integer', Rule::exists('brands', 'id')],
+                'name' => ['required', 'max:150'],
+                'character_name' => ['nullable', 'max:100'],
+                'series' => ['nullable', 'max:100'],
+                'material' => ['nullable', 'max:50'],
+                'height' => ['nullable', 'numeric', 'min:0'],
+                'price' => ['required', 'numeric', 'min:0'],
+                'stock' => ['required', 'integer', 'min:0'],
+                'description' => ['nullable'],
+                'isActive' => ['required', 'boolean'],
+            ]),
+            'product_images' => $request->validate([
+                'product_id' => ['required', 'integer', Rule::exists('products', 'id')],
+                'image' => [$record ? 'nullable' : 'required', 'image', 'max:4096'],
+                'is_primary' => ['required', 'boolean'],
+            ]),
+            'tags' => $request->validate(['name' => ['required', 'max:50', $this->uniqueRule('tags', 'name', $record)]]),
+            'order_statuses' => $request->validate(['name' => ['required', 'max:30', $this->uniqueRule('order_statuses', 'name', $record)]]),
+            'payment_statuses' => $request->validate(['name' => ['required', 'max:30', $this->uniqueRule('payment_statuses', 'name', $record)]]),
+            'payment_methods' => $request->validate(['name' => ['required', 'max:50', $this->uniqueRule('payment_methods', 'name', $record)]]),
             'banners' => $request->validate([
                 'title' => ['required', 'max:100'],
-                'image' => ['required', 'max:255'],
+                'eyebrow' => ['nullable', 'max:80'],
+                'subtitle' => ['nullable', 'max:255'],
+                'button_text' => ['nullable', 'max:40'],
+                'image' => [$record ? 'nullable' : 'required', 'image', 'max:4096'],
                 'link' => ['nullable', 'max:255'],
-            ]) + ['user_id' => $request->user()->id],
+            ]),
             'coupons' => $request->validate([
-                'code' => ['required', 'max:50', Rule::unique('coupons', 'code')],
+                'code' => ['required', 'max:50', $this->uniqueRule('coupons', 'code', $record)],
                 'type' => ['required', Rule::in(['fixed', 'percent'])],
                 'value' => ['required', 'numeric', 'min:0'],
                 'min_order' => ['nullable', 'numeric', 'min:0'],
                 'start_date' => ['required', 'date'],
                 'end_date' => ['required', 'date', 'after_or_equal:start_date'],
                 'usage_limit' => ['nullable', 'integer', 'min:1'],
-            ]) + ['user_id' => $request->user()->id, 'used_count' => 0],
+            ]),
             default => abort(422, 'This table is read-only from the generic admin screen.'),
         };
+
+        if (in_array($table, ['categories', 'brands', 'products', 'tags', 'order_statuses', 'payment_statuses', 'payment_methods', 'banners', 'coupons'], true)) {
+            $data['user_id'] = $record?->getAttribute('user_id') ?? $request->user()->id;
+        }
+
+        if ($request->hasFile('image')) {
+            $data['image'] = Storage::url($request->file('image')->store("admin/{$table}", 'public'));
+        } elseif ($record && array_key_exists('image', $data)) {
+            unset($data['image']);
+        }
+
+        if ($table === 'users') {
+            if (filled($data['password'] ?? null)) {
+                $data['password'] = Hash::make($data['password']);
+            } else {
+                unset($data['password']);
+            }
+        }
+
+        if ($table === 'coupons' && $record === null) {
+            $data['used_count'] = 0;
+        }
+
+        return $data;
+    }
+
+    private function uniqueRule(string $table, string $column, ?Model $record): Unique
+    {
+        $rule = Rule::unique($table, $column);
+
+        if ($record) {
+            $rule->ignore($record->getKey());
+        }
+
+        return $rule;
+    }
+
+    private function updateProductTag(Request $request, string $key): void
+    {
+        [$originalProductId, $originalTagId] = array_pad(explode('-', $key, 2), 2, null);
+        abort_unless($originalProductId && $originalTagId, 404);
+
+        $data = $request->validate([
+            'product_id' => ['required', 'integer', Rule::exists('products', 'id')],
+            'tag_id' => ['required', 'integer', Rule::exists('tags', 'id')],
+        ]);
+
+        $exists = DB::table('product_tags')
+            ->where('product_id', $originalProductId)
+            ->where('tag_id', $originalTagId)
+            ->exists();
+
+        abort_unless($exists, 404);
+
+        $duplicate = DB::table('product_tags')
+            ->where('product_id', $data['product_id'])
+            ->where('tag_id', $data['tag_id'])
+            ->where(function ($query) use ($originalProductId, $originalTagId): void {
+                $query
+                    ->where('product_id', '!=', $originalProductId)
+                    ->orWhere('tag_id', '!=', $originalTagId);
+            })
+            ->exists();
+
+        abort_if($duplicate, 422, 'This product tag already exists.');
+
+        DB::table('product_tags')
+            ->where('product_id', $originalProductId)
+            ->where('tag_id', $originalTagId)
+            ->update($data);
     }
 }

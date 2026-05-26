@@ -39,7 +39,7 @@ class DatabaseSeeder extends Seeder
             'email' => 'admin@figureverse.test',
         ], [
             'role_id' => $adminRole->id,
-            'name' => 'FigureVerse Admin',
+            'name' => 'Infinity Figures Admin',
             'username' => 'admin',
             'password' => Hash::make('password'),
         ]);
@@ -193,7 +193,7 @@ class DatabaseSeeder extends Seeder
         ]);
 
         $coupon = Coupon::firstOrCreate([
-            'code' => 'KRUY10',
+            'code' => 'INFINITY10',
         ], [
             'type' => 'percent',
             'value' => 10,

@@ -22,6 +22,25 @@ class ShopController extends Controller
             ->when($request->filled('brand'), function ($query) use ($request): void {
                 $query->whereHas('brand', fn ($brandQuery) => $brandQuery->where('id', $request->integer('brand')));
             })
+            ->when($request->filled('min_price'), function ($query) use ($request): void {
+                $query->where('price', '>=', $request->input('min_price'));
+            })
+            ->when($request->filled('max_price'), function ($query) use ($request): void {
+                $query->where('price', '<=', $request->input('max_price'));
+            })
+            ->when($request->filled('availability'), function ($query) use ($request): void {
+                if ($request->string('availability')->toString() === 'in_stock') {
+                    $query->where('stock', '>', 0);
+                }
+
+                if ($request->string('availability')->toString() === 'low_stock') {
+                    $query->whereBetween('stock', [1, 6]);
+                }
+
+                if ($request->string('availability')->toString() === 'sold_out') {
+                    $query->where('stock', '<=', 0);
+                }
+            })
             ->when($request->filled('search'), function ($query) use ($request): void {
                 $search = $request->string('search')->toString();
 

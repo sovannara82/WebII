@@ -1,6 +1,6 @@
-@extends('layouts.app')
+@extends('layouts.customer')
 
-@section('title', 'Order #'.$order->id.' - KRUY')
+@section('title', 'Order #'.$order->id.' - Infinity Figures')
 
 @section('content')
     <section class="container py-5">

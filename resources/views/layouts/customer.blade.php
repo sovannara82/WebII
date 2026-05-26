@@ -17,7 +17,7 @@
     <!-- Scripts -->
     @vite(['resources/sass/app.scss', 'resources/js/app.js'])
 </head>
-<body class="figure-app">
+<body class="figure-app customer-app">
     <div id="app">
         <nav class="navbar navbar-expand-lg navbar-dark sticky-top app-navbar">
             <div class="container">
@@ -53,8 +53,18 @@
                             </li>
                         @endauth
                         @auth
+                            @if (Auth::user()->isAdmin())
+                                <li class="nav-item">
+                                    <a class="nav-link admin-entry" href="{{ route('admin.dashboard') }}">
+                                        <i class="bi bi-speedometer2"></i>
+                                        Admin
+                                    </a>
+                                </li>
+                            @endif
+                        @endauth
+                        @auth
                             <li class="nav-item">
-                                <a class="nav-link" href="{{ route('admin.dashboard') }}">Admin</a>
+                                <a class="nav-link" href="{{ route('profile.edit') }}">Profile</a>
                             </li>
                         @endauth
                     </ul>

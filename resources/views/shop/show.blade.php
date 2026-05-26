@@ -1,44 +1,42 @@
-@extends('layouts.app')
+@extends('layouts.customer')
 
-@section('title', $product->name.' - FigureVerse')
+@section('title', $product->name.' - Infinity Figures')
 
 @section('content')
-    <section class="container py-5">
-        <div class="row g-5">
+    <section class="container product-detail-page py-5">
+        <div class="row g-5 align-items-start">
             <div class="col-lg-6">
-                <div class="product-detail-image">
+                <div class="product-detail-image zoom-frame">
                     <img src="{{ $product->primaryImage?->image ?? $product->images->first()?->image ?? 'https://images.unsplash.com/photo-1608889175123-8ee362201f81?auto=format&fit=crop&w=900&q=80' }}" alt="{{ $product->name }}">
                 </div>
-                <div class="row g-3 mt-1">
-                    @foreach ($product->images->take(3) as $image)
+                <div class="row g-3 mt-2">
+                    @forelse ($product->images->take(4) as $image)
                         <div class="col-4">
                             <img class="detail-thumb" src="{{ $image->image }}" alt="{{ $product->name }}">
                         </div>
-                    @endforeach
+                    @empty
+                        <div class="col-4">
+                            <img class="detail-thumb" src="https://images.unsplash.com/photo-1608889175123-8ee362201f81?auto=format&fit=crop&w=400&q=80" alt="{{ $product->name }}">
+                        </div>
+                    @endforelse
                 </div>
             </div>
 
             <div class="col-lg-6">
-                <p class="text-uppercase small admin-muted mb-1">{{ $product->category->name }} / {{ $product->brand?->name ?? 'Independent Studio' }}</p>
-                <h1 class="display-6 fw-bold">{{ $product->name }}</h1>
-                <p class="lead admin-muted">{{ $product->description }}</p>
-                <div class="d-flex align-items-center gap-3 mb-4">
-                    <span class="price">{{ $averageRating ?: 'No' }} rating</span>
+                <div class="detail-kicker">{{ $product->category->name }} / {{ $product->brand?->name ?? 'Independent Studio' }}</div>
+                <h1 class="display-6 fw-bold mb-3">{{ $product->name }}</h1>
+                <div class="rating-row mb-4">
+                    @for ($star = 1; $star <= 5; $star++)
+                        <i class="bi {{ $averageRating >= $star ? 'bi-star-fill' : 'bi-star' }}"></i>
+                    @endfor
+                    <span>{{ $averageRating ?: 'No' }} rating</span>
                     <span class="admin-muted">{{ $product->reviews->count() }} reviews</span>
                     @auth
                         <form action="{{ route('wishlist.toggle', $product) }}" method="POST">
                             @csrf
-                            <button class="btn btn-outline-light" type="submit"><i class="bi bi-heart-fill"></i> Wishlist</button>
+                            <button class="btn btn-outline-light wishlist-animated" type="submit"><i class="bi bi-heart-fill"></i> Wishlist</button>
                         </form>
                     @endauth
-                </div>
-
-                <div class="product-specs my-4">
-                    <div><span>Character</span><strong>{{ $product->character_name ?? 'Original' }}</strong></div>
-                    <div><span>Series</span><strong>{{ $product->series ?? 'Collector line' }}</strong></div>
-                    <div><span>Material</span><strong>{{ $product->material ?? 'PVC / ABS' }}</strong></div>
-                    <div><span>Height</span><strong>{{ $product->height ? $product->height.' cm' : 'TBA' }}</strong></div>
-                    <div><span>Stock</span><strong>{{ $product->stock }} units</strong></div>
                 </div>
 
                 <form action="{{ route('cart.store', $product) }}" method="POST" class="buy-panel">
@@ -48,8 +46,14 @@
                         <div class="h3 fw-bold mb-0">${{ number_format((float) $product->price, 2) }}</div>
                     </div>
                     <input class="form-control" name="quantity" type="number" value="1" min="1" max="20" aria-label="Quantity">
-                    <button class="btn btn-gold btn-lg" type="submit">Add to cart</button>
+                    <button class="btn btn-gold btn-lg add-cart-pop" type="submit" @disabled($product->stock <= 0)>Add to cart</button>
+                    <a class="btn btn-outline-light btn-lg" href="{{ route('checkout.create') }}">Buy now</a>
                 </form>
+
+                <div class="stock-strip {{ $product->stock <= 0 ? 'sold-out' : ($product->stock <= 6 ? 'low-stock' : '') }}">
+                    <i class="bi bi-box-seam"></i>
+                    {{ $product->stock <= 0 ? 'Currently sold out' : ($product->stock <= 6 ? 'Only '.$product->stock.' left' : $product->stock.' ready to ship') }}
+                </div>
 
                 @if ($product->tags->isNotEmpty())
                     <div class="d-flex flex-wrap gap-2 mt-4">
@@ -59,6 +63,28 @@
                     </div>
                 @endif
             </div>
+        </div>
+
+        <div class="row g-4 mt-5">
+            <div class="col-lg-7">
+                <div class="detail-panel">
+                    <h2>Product description</h2>
+                    <p>{{ $product->description ?: 'A collector-ready figure with shelf presence, crisp paint details, and display-friendly proportions.' }}</p>
+                </div>
+            </div>
+            <div class="col-lg-5">
+                <div class="product-specs">
+                    <div><span>Character</span><strong>{{ $product->character_name ?? 'Original' }}</strong></div>
+                    <div><span>Series</span><strong>{{ $product->series ?? 'Collector line' }}</strong></div>
+                    <div><span>Material</span><strong>{{ $product->material ?? 'PVC / ABS' }}</strong></div>
+                    <div><span>Height</span><strong>{{ $product->height ? $product->height.' cm' : 'TBA' }}</strong></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="detail-panel mt-4">
+            <h2>Character information</h2>
+            <p>{{ $product->character_name ?? 'This release' }} from {{ $product->series ?? 'the collector line' }} is curated for anime merchandise fans who want a display piece with strong character identity and clean finishing.</p>
         </div>
 
         @if ($relatedProducts->isNotEmpty())
@@ -104,7 +130,11 @@
                         <div class="admin-panel mb-3">
                             <div class="d-flex justify-content-between">
                                 <strong>{{ $review->user->name }}</strong>
-                                <span class="price">{{ $review->rating }}/5</span>
+                                <span class="rating-row compact">
+                                    @for ($star = 1; $star <= 5; $star++)
+                                        <i class="bi {{ $review->rating >= $star ? 'bi-star-fill' : 'bi-star' }}"></i>
+                                    @endfor
+                                </span>
                             </div>
                             <p class="admin-muted mb-0">{{ $review->comment ?: 'No comment left.' }}</p>
                         </div>

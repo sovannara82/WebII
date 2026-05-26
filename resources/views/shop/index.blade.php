@@ -1,6 +1,6 @@
-@extends('layouts.app')
+@extends('layouts.customer')
 
-@section('title', 'FigureVerse - Collectible Figure Shop')
+@section('title', 'Infinity Figures - Collectible Figure Shop')
 
 @section('content')
     <section class="shop-hero" id="home">
@@ -34,6 +34,58 @@
         </div>
     </section>
 
+    <section class="promo-section">
+        <div class="container-fluid shop-wide">
+            @forelse ($banners as $banner)
+                @if ($loop->first)
+                    <div class="section-heading promo-heading">
+                        <span>Collector Campaigns</span>
+                        <h2>Fresh drops and deals</h2>
+                    </div>
+                    <div class="promo-grid">
+                @endif
+
+                @php
+                    $bannerImage = Illuminate\Support\Str::startsWith($banner->image, ['http://', 'https://'])
+                        ? $banner->image
+                        : asset($banner->image);
+                @endphp
+
+                <article class="promo-banner {{ $loop->first ? 'promo-banner-featured' : '' }}" style="--banner-image: url('{{ $bannerImage }}')">
+                    <div class="promo-banner-media" aria-hidden="true"></div>
+                    <div class="promo-banner-content">
+                        <span>{{ $banner->eyebrow ?: ($loop->first ? 'Featured Campaign' : 'Limited Run') }}</span>
+                        <h2>{{ $banner->title }}</h2>
+                        <p>{{ $banner->subtitle ?: ($loop->first ? 'Explore the newest collector promotion and featured arrivals before they leave the shelf.' : 'A curated offer for collectors looking for their next display piece.') }}</p>
+                    </div>
+                    <a class="btn btn-gold btn-lg" href="{{ $banner->link ?? route('shop.index') }}#products">
+                        {{ $banner->button_text ?: 'Explore' }}
+                    </a>
+                </article>
+
+                @if ($loop->last)
+                    </div>
+                @endif
+            @empty
+                <div class="section-heading promo-heading">
+                    <span>Collector Campaigns</span>
+                    <h2>Fresh drops and deals</h2>
+                </div>
+                <div class="promo-grid">
+                    <article class="promo-banner promo-banner-featured">
+                        <div class="promo-banner-media" aria-hidden="true"></div>
+                        <div class="promo-banner-content">
+                            <span>Featured Campaign</span>
+                            <h2>Mega Anime Sale</h2>
+                            <p>Get up to 30% off selected scale figures and action figure collections.</p>
+                        </div>
+                        <a class="btn btn-gold btn-lg" href="{{ route('shop.index') }}#products">Explore</a>
+                    </article>
+                </div>
+            @endforelse
+        </div>
+    </section>
+
     <section class="shop-section" id="categories">
         <div class="container-fluid shop-wide">
             <div class="section-heading">
@@ -64,7 +116,12 @@
                     <span>{{ $products->total() }} products</span>
                 </div>
 
-                <form class="filter-panel" action="{{ route('shop.index') }}">
+                <form class="filter-panel" action="{{ route('products.index') }}">
+                    <div class="filter-search">
+                        <label class="form-label" for="search">Search figures</label>
+                        <input class="form-control" id="search" name="search" value="{{ request('search') }}" placeholder="Name, character, or series">
+                    </div>
+
                     <div>
                         <label class="form-label" for="category">Category</label>
                         <select class="form-select" id="category" name="category">
@@ -78,6 +135,26 @@
                     </div>
 
                     <div>
+                        <label class="form-label" for="availability">Availability</label>
+                        <select class="form-select" id="availability" name="availability">
+                            <option value="">Any stock</option>
+                            <option value="in_stock" @selected(request('availability') === 'in_stock')>In stock</option>
+                            <option value="low_stock" @selected(request('availability') === 'low_stock')>Low stock</option>
+                            <option value="sold_out" @selected(request('availability') === 'sold_out')>Sold out</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="form-label" for="min_price">Min price</label>
+                        <input class="form-control" id="min_price" name="min_price" type="number" min="0" step="0.01" value="{{ request('min_price') }}" placeholder="$0">
+                    </div>
+
+                    <div>
+                        <label class="form-label" for="max_price">Max price</label>
+                        <input class="form-control" id="max_price" name="max_price" type="number" min="0" step="0.01" value="{{ request('max_price') }}" placeholder="$500">
+                    </div>
+
+                    <div>
                         <label class="form-label" for="brand">Brand</label>
                         <select class="form-select" id="brand" name="brand">
                             <option value="">All brands</option>
@@ -87,8 +164,10 @@
                         </select>
                     </div>
 
-                    <input type="hidden" name="search" value="{{ request('search') }}">
-                    <button class="btn btn-gold" type="submit">Apply Filters</button>
+                    <div class="filter-actions">
+                        <button class="btn btn-gold" type="submit"><i class="bi bi-funnel"></i> Apply</button>
+                        <a class="btn btn-outline-light" href="{{ route('products.index') }}">Reset</a>
+                    </div>
                 </form>
 
                 <div class="product-grid">
@@ -106,6 +185,9 @@
                             </div>
                             <a href="{{ route('shop.show', $product) }}" class="product-image-wrap">
                                 <img src="{{ $product->primaryImage?->image ?? 'https://images.unsplash.com/photo-1618336753974-aae8e04506aa?auto=format&fit=crop&w=700&q=80' }}" alt="{{ $product->name }}">
+                                <span class="stock-badge {{ $product->stock <= 0 ? 'sold-out' : ($product->stock <= 6 ? 'low-stock' : '') }}">
+                                    {{ $product->stock <= 0 ? 'Sold out' : ($product->stock <= 6 ? 'Low stock' : 'In stock') }}
+                                </span>
                             </a>
                             <div class="product-body">
                                 <div class="product-meta">
@@ -118,10 +200,15 @@
                                 <p>{{ $product->series }} {{ $product->height ? '- '.$product->height.' cm' : '' }}</p>
                                 <div class="product-actions">
                                     <strong>${{ number_format((float) $product->price, 2) }}</strong>
-                                    <form action="{{ route('cart.store', $product) }}" method="POST">
-                                        @csrf
-                                        <button class="btn btn-gold add-cart" type="submit">Add Cart</button>
-                                    </form>
+                                    <div class="quick-actions">
+                                        <a class="btn btn-outline-light icon-action" href="{{ route('shop.show', $product) }}" aria-label="View details">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                        <form action="{{ route('cart.store', $product) }}" method="POST">
+                                            @csrf
+                                            <button class="btn btn-gold add-cart" type="submit" @disabled($product->stock <= 0)>Add Cart</button>
+                                        </form>
+                                    </div>
                                 </div>
                             </div>
                         </article>
@@ -137,35 +224,11 @@
         </div>
     </section>
 
-    <section class="promo-section">
-        <div class="container-fluid shop-wide">
-            @forelse ($banners as $banner)
-                <div class="promo-banner" style="background-image: linear-gradient(90deg, rgba(124, 58, 237, 0.94), rgba(236, 72, 153, 0.9)), url('{{ $banner->image }}')">
-                    <div>
-                        <span>Limited Run</span>
-                        <h2>{{ $banner->title }}</h2>
-                        <p>Get up to 30% off selected scale figures and action figure collections.</p>
-                    </div>
-                    <a class="btn btn-light btn-lg" href="{{ $banner->link ?? route('shop.index') }}">Explore Deals</a>
-                </div>
-            @empty
-                <div class="promo-banner">
-                    <div>
-                        <span>Limited Run</span>
-                        <h2>Mega Anime Sale</h2>
-                        <p>Get up to 30% off selected scale figures and action figure collections.</p>
-                    </div>
-                    <a class="btn btn-light btn-lg" href="{{ route('shop.index') }}#products">Explore Deals</a>
-                </div>
-            @endforelse
-        </div>
-    </section>
-
     <footer class="shop-footer">
         <div class="container-fluid shop-wide">
             <div class="footer-top">
                 <div class="footer-brand">
-                    <a class="footer-logo" href="{{ route('shop.index') }}">KRUY</a>
+                    <a class="footer-logo" href="{{ route('shop.index') }}">Infinity Figures</a>
                     <p>Premium anime figure online store for collectors who care about sculpt, paint, packaging, and display presence.</p>
                     <div class="footer-socials" aria-label="Social links">
                         <a href="#" aria-label="Facebook"><i class="bi bi-facebook"></i></a>
@@ -195,7 +258,7 @@
                     <h4>Store Info</h4>
                     <p><i class="bi bi-geo-alt"></i> Phnom Penh, Cambodia</p>
                     <p><i class="bi bi-telephone"></i> +855 968276484</p>
-                    <p><i class="bi bi-envelope"></i> support@kruy-figures.test</p>
+                    <p><i class="bi bi-envelope"></i> support@infinity-figures.test</p>
                     <div class="payment-row">
                         <span>ABA</span>
                         <span>Visa</span>
@@ -214,11 +277,11 @@
             </div>
 
             <div class="footer-bottom">
-                <span>© {{ now()->year }} KRUY Figure Shop. All rights reserved.</span>
+                <span>© {{ now()->year }} Infinity Figures. All rights reserved.</span>
                 <div>
                     <a href="#">Privacy</a>
                     <a href="#">Terms</a>
-                    <a href="#">Returns</a>x
+                    <a href="#">Returns</a>
                 </div>
             </div>
         </div>

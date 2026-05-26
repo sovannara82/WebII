@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>@yield('title', 'KRUY Admin')</title>
+    <title>@yield('title', 'Infinity Figures Admin')</title>
 
     <link rel="dns-prefetch" href="//fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=poppins:300,400,500,600,700,800" rel="stylesheet">
@@ -14,34 +14,72 @@
     @vite(['resources/sass/app.scss', 'resources/js/app.js'])
 </head>
 <body class="admin-app">
+    @php
+        $adminMenuGroups = [
+            'Catalog' => [
+                ['table' => 'products', 'label' => 'Products', 'icon' => 'bi-box-seam'],
+                ['table' => 'categories', 'label' => 'Categories', 'icon' => 'bi-tags-fill'],
+                ['table' => 'brands', 'label' => 'Brands', 'icon' => 'bi-bookmark-star-fill'],
+                ['table' => 'product_images', 'label' => 'Product Images', 'icon' => 'bi-images'],
+                ['table' => 'tags', 'label' => 'Tags', 'icon' => 'bi-tag-fill'],
+                ['table' => 'product_tags', 'label' => 'Product Tags', 'icon' => 'bi-diagram-3-fill'],
+            ],
+            'Sales' => [
+                ['table' => 'orders', 'label' => 'Orders', 'icon' => 'bi-cart-fill'],
+                ['table' => 'order_items', 'label' => 'Order Items', 'icon' => 'bi-receipt-cutoff'],
+                ['table' => 'payments', 'label' => 'Payments', 'icon' => 'bi-credit-card-fill'],
+                ['table' => 'coupons', 'label' => 'Coupons', 'icon' => 'bi-percent'],
+                ['table' => 'order_coupons', 'label' => 'Order Coupons', 'icon' => 'bi-ticket-perforated-fill'],
+            ],
+            'Customers' => [
+                ['table' => 'users', 'label' => 'Users', 'icon' => 'bi-people-fill'],
+                ['table' => 'carts', 'label' => 'Carts', 'icon' => 'bi-bag-fill'],
+                ['table' => 'cart_items', 'label' => 'Cart Items', 'icon' => 'bi-basket-fill'],
+                ['table' => 'wishlists', 'label' => 'Wishlists', 'icon' => 'bi-heart-fill'],
+                ['table' => 'reviews', 'label' => 'Reviews', 'icon' => 'bi-star-fill'],
+            ],
+            'Settings' => [
+                ['table' => 'roles', 'label' => 'Roles', 'icon' => 'bi-shield-lock-fill'],
+                ['table' => 'order_statuses', 'label' => 'Order Statuses', 'icon' => 'bi-list-check'],
+                ['table' => 'payment_statuses', 'label' => 'Payment Statuses', 'icon' => 'bi-check-circle-fill'],
+                ['table' => 'payment_methods', 'label' => 'Payment Methods', 'icon' => 'bi-wallet2'],
+                ['table' => 'banners', 'label' => 'Banners', 'icon' => 'bi-card-image'],
+            ],
+        ];
+
+        $availableTables = $tables ?? collect($adminMenuGroups)->flatten(1)->pluck('table')->all();
+    @endphp
+
     <section class="admin-layout">
         <aside class="admin-sidebar">
-            <a class="admin-logo" href="{{ route('admin.dashboard') }}">KRUY</a>
+            <a class="admin-logo" href="{{ route('admin.dashboard') }}">Infinity Figures</a>
             <nav class="admin-menu">
-                <a class="{{ request()->routeIs('admin.dashboard') ? 'active' : '' }}" href="{{ route('admin.dashboard') }}">
-                    <i class="bi bi-grid-1x2-fill"></i> Dashboard
-                </a>
-                <a class="{{ request('table') === 'products' ? 'active' : '' }}" href="{{ route('admin.data', ['table' => 'products']) }}">
-                    <i class="bi bi-box-seam"></i> Products
-                </a>
-                <a class="{{ request('table') === 'categories' ? 'active' : '' }}" href="{{ route('admin.data', ['table' => 'categories']) }}">
-                    <i class="bi bi-tags-fill"></i> Categories
-                </a>
-                <a class="{{ request('table') === 'orders' ? 'active' : '' }}" href="{{ route('admin.data', ['table' => 'orders']) }}">
-                    <i class="bi bi-cart-fill"></i> Orders
-                </a>
-                <a class="{{ request('table') === 'users' ? 'active' : '' }}" href="{{ route('admin.data', ['table' => 'users']) }}">
-                    <i class="bi bi-people-fill"></i> Users
-                </a>
-                <a class="{{ request('table') === 'payments' ? 'active' : '' }}" href="{{ route('admin.data', ['table' => 'payments']) }}">
-                    <i class="bi bi-credit-card-fill"></i> Payments
-                </a>
-                <a class="{{ request('table') === 'coupons' ? 'active' : '' }}" href="{{ route('admin.data', ['table' => 'coupons']) }}">
-                    <i class="bi bi-percent"></i> Coupons
-                </a>
-                <a href="{{ route('shop.index') }}">
-                    <i class="bi bi-shop"></i> View Shop
-                </a>
+                <div class="admin-menu-section">
+                    <span class="admin-menu-label">Main</span>
+                    <a class="{{ request()->routeIs('admin.dashboard') ? 'active' : '' }}" href="{{ route('admin.dashboard') }}">
+                        <i class="bi bi-grid-1x2-fill"></i> Dashboard
+                    </a>
+                </div>
+
+                @foreach ($adminMenuGroups as $group => $links)
+                    <div class="admin-menu-section">
+                        <span class="admin-menu-label">{{ $group }}</span>
+                        @foreach ($links as $link)
+                            @continue(! in_array($link['table'], $availableTables, true))
+
+                            <a class="{{ request('table') === $link['table'] ? 'active' : '' }}" href="{{ route('admin.data', ['table' => $link['table']]) }}">
+                                <i class="bi {{ $link['icon'] }}"></i> {{ $link['label'] }}
+                            </a>
+                        @endforeach
+                    </div>
+                @endforeach
+
+                <div class="admin-menu-section admin-menu-section-shop">
+                    <span class="admin-menu-label">Storefront</span>
+                    <a href="{{ route('shop.index') }}">
+                        <i class="bi bi-shop"></i> View Shop
+                    </a>
+                </div>
             </nav>
         </aside>
 
@@ -53,10 +91,10 @@
             <div class="admin-topbar">
                 <div>
                     <h1>@yield('admin-title', 'Dashboard')</h1>
-                    <p>@yield('admin-subtitle', 'Manage KRUY figure shop operations.')</p>
+                    <p>@yield('admin-subtitle', 'Manage Infinity Figures operations.')</p>
                 </div>
                 <div class="admin-tools">
-                    <input class="admin-search" placeholder="Search...">
+                    
                     <div class="admin-profile">
                         <i class="bi bi-person-circle"></i>
                         {{ Auth::user()->name ?? 'Admin' }}
