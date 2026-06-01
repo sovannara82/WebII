@@ -17,7 +17,7 @@
     <!-- Scripts -->
     @vite(['resources/sass/app.scss', 'resources/js/app.js'])
 </head>
-<body class="figure-app">
+<body class="figure-app customer-app">
     <div id="app">
         <nav class="navbar navbar-expand-lg navbar-dark sticky-top app-navbar">
             <div class="container">
@@ -45,17 +45,16 @@
                             <li class="nav-item">
                                 <a class="nav-link" href="{{ route('orders.index') }}">Orders</a>
                             </li>
-                            <li class="nav-item">
-                                <a class="nav-link nav-counter" href="{{ route('wishlist.index') }}">
-                                    Wishlist
-                                    <span>{{ Auth::user()->wishlists()->count() }}</span>
-                                </a>
-                            </li>
                         @endauth
                         @auth
-                            <li class="nav-item">
-                                <a class="nav-link" href="{{ route('admin.dashboard') }}">Admin</a>
-                            </li>
+                            @if (Auth::user()->isAdmin())
+                                <li class="nav-item">
+                                    <a class="nav-link admin-entry" href="{{ route('admin.dashboard') }}">
+                                        <i class="bi bi-speedometer2"></i>
+                                        Admin
+                                    </a>
+                                </li>
+                            @endif
                         @endauth
                     </ul>
 
@@ -75,8 +74,41 @@
                                 </li>
                             @endif
                         @else
+                            <li class="nav-item">
+                                <a class="nav-link nav-counter" href="{{ route('wishlist.index') }}">
+                                    Wishlist
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link cart-pill nav-counter" href="{{ route('cart.index') }}">
+                                    <i class="bi bi-bag"></i>
+                                    Cart
+                                </a>
+                            </li>
+                            @php
+                                $navProfileImage = null;
+
+                                if (filled(Auth::user()->image)) {
+                                    if (Illuminate\Support\Str::startsWith(Auth::user()->image, ['http://', 'https://', '/'])) {
+                                        $navProfileImage = Auth::user()->image;
+                                    } elseif (Illuminate\Support\Str::startsWith(Auth::user()->image, 'storage/')) {
+                                        $navProfileImage = asset(Auth::user()->image);
+                                    } else {
+                                        $navProfileImage = asset('storage/'.Auth::user()->image);
+                                    }
+
+                                    $navProfileImage .= (str_contains($navProfileImage, '?') ? '&' : '?').'v='.Auth::user()->updated_at?->timestamp;
+                                }
+                            @endphp
                             <li class="nav-item dropdown">
-                                <a id="navbarDropdown" class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" v-pre>
+                                <a id="navbarDropdown" class="nav-link dropdown-toggle nav-profile-link" href="#" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" v-pre>
+                                    <span class="nav-avatar">
+                                        @if ($navProfileImage)
+                                            <img src="{{ $navProfileImage }}" alt="{{ Auth::user()->name }}">
+                                        @else
+                                            <i class="bi bi-person-fill"></i>
+                                        @endif
+                                    </span>
                                     {{ Auth::user()->name }}
                                 </a>
 
@@ -96,12 +128,6 @@
                                 </div>
                             </li>
                         @endguest
-                        <li class="nav-item">
-                            <a class="nav-link cart-pill" href="{{ route('cart.index') }}">
-                                <i class="bi bi-bag"></i>
-                                Cart
-                            </a>
-                        </li>
                     </ul>
                 </div>
             </div>

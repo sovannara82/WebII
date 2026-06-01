@@ -1,4 +1,4 @@
-@extends('layouts.customer')
+@extends('layouts.app')
 
 @section('title', 'Checkout - Infinity Figures')
 
@@ -32,7 +32,7 @@
                         </div>
                         <div class="col-md-6">
                             <label class="form-label" for="coupon_code">Coupon</label>
-                            <input class="form-control" id="coupon_code" name="coupon_code" list="coupon-list" placeholder="Optional code">
+                            <input class="form-control" id="coupon_code" name="coupon_code" list="coupon-list" placeholder="Optional code" data-coupon-input>
                             <datalist id="coupon-list">
                                 @foreach ($coupons as $coupon)
                                     <option value="{{ $coupon->code }}">{{ $coupon->type }} {{ $coupon->value }}</option>
@@ -57,8 +57,59 @@
                         <span>Subtotal</span>
                         <strong>${{ number_format($subtotal, 2) }}</strong>
                     </div>
+                    <div class="d-flex justify-content-between mt-2" data-discount-row hidden>
+                        <span>Discount</span>
+                        <strong>-<span data-discount-amount>$0.00</span></strong>
+                    </div>
+                    <div class="d-flex justify-content-between mt-2" data-after-discount-row hidden>
+                        <span>Price after discount</span>
+                        <strong data-after-discount-amount>${{ number_format($subtotal, 2) }}</strong>
+                    </div>
+                    <div class="d-flex justify-content-between mt-2">
+                        <span>Shipping</span>
+                        <strong>{{ $shippingFee > 0 ? '$'.number_format($shippingFee, 2) : 'Free' }}</strong>
+                    </div>
+                    <div class="d-flex justify-content-between h4 mt-3">
+                        <span>Total</span>
+                        <strong data-total-amount>${{ number_format($subtotal + $shippingFee, 2) }}</strong>
+                    </div>
                 </div>
             </aside>
         </div>
     </section>
+
+    <script>
+        (() => {
+            const subtotal = Number(@json($subtotal));
+            const shippingFee = Number(@json($shippingFee));
+            const coupons = @json($couponPreviews);
+            const couponInput = document.querySelector('[data-coupon-input]');
+            const discountRow = document.querySelector('[data-discount-row]');
+            const afterDiscountRow = document.querySelector('[data-after-discount-row]');
+            const discountAmount = document.querySelector('[data-discount-amount]');
+            const afterDiscountAmount = document.querySelector('[data-after-discount-amount]');
+            const totalAmount = document.querySelector('[data-total-amount]');
+            const money = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' });
+
+            if (! couponInput || ! discountRow || ! afterDiscountRow || ! discountAmount || ! afterDiscountAmount || ! totalAmount) {
+                return;
+            }
+
+            const updateSummary = () => {
+                const coupon = coupons[couponInput.value.trim()];
+                const discount = coupon ? Number(coupon.discount) : 0;
+                const priceAfterDiscount = Math.max(0, subtotal - discount);
+                const total = priceAfterDiscount + shippingFee;
+
+                discountRow.hidden = discount <= 0;
+                afterDiscountRow.hidden = discount <= 0;
+                discountAmount.textContent = money.format(discount);
+                afterDiscountAmount.textContent = money.format(priceAfterDiscount);
+                totalAmount.textContent = money.format(total);
+            };
+
+            couponInput.addEventListener('input', updateSummary);
+            updateSummary();
+        })();
+    </script>
 @endsection

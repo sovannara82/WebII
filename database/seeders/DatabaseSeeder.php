@@ -36,24 +36,12 @@ class DatabaseSeeder extends Seeder
         $customerRole = Role::firstOrCreate(['name' => 'Customer']);
 
         $admin = User::firstOrCreate([
-            'email' => 'admin@figureverse.test',
+            'email' => 'admin@infinityfigure.com',
         ], [
             'role_id' => $adminRole->id,
             'name' => 'Infinity Figures Admin',
             'username' => 'admin',
-            'password' => Hash::make('password'),
-        ]);
-
-        $customer = User::firstOrCreate([
-            'email' => 'collector@example.com',
-        ], [
-            'role_id' => $customerRole->id,
-            'name' => 'Sample Collector',
-            'username' => 'collector',
-            'password' => Hash::make('password'),
-            'phone' => '+855 12 345 678',
-            'city' => 'Phnom Penh',
-            'province' => 'Phnom Penh',
+            'password' => Hash::make('kruyadmin123123'),
         ]);
 
         $categories = collect([
@@ -126,7 +114,7 @@ class DatabaseSeeder extends Seeder
                 'price' => 279.00,
                 'stock' => 2,
                 'image' => 'https://images.unsplash.com/photo-1608278047522-58806a6ac85b?auto=format&fit=crop&w=900&q=80',
-                'description' => 'A dramatic resin statue with layered armor, metallic red paint, and a numbered collector base.',
+                'description' => 'A dramatic resin statue with layered armor, metallic red paint, and a numbered customer base.',
             ],
         ])->map(function (array $data) use ($admin, $brands, $categories, $tags): Product {
             $product = Product::updateOrCreate([
@@ -156,10 +144,10 @@ class DatabaseSeeder extends Seeder
         });
 
         Banner::updateOrCreate([
-            'title' => 'New collector arrivals',
+            'title' => 'New customer arrivals',
         ], [
             'image' => 'https://images.unsplash.com/photo-1608889825205-eebdb9fc5806?auto=format&fit=crop&w=1400&q=80',
-            'link' => route('shop.index'),
+            'link' => route('products.index'),
             'user_id' => $admin->id,
         ]);
 

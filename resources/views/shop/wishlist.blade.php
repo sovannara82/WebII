@@ -1,4 +1,4 @@
-@extends('layouts.customer')
+@extends('layouts.app')
 
 @section('title', 'Wishlist - Infinity Figures')
 

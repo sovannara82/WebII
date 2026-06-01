@@ -26,13 +26,24 @@ class CheckoutController extends Controller
     {
         $cart = Cart::firstOrCreate(['user_id' => $request->user()->id]);
         $cart->load('items.product.primaryImage');
+        $subtotal = $cart->items->sum(fn (CartItem $item): float => (float) $item->price * $item->quantity);
+        $shippingFee = $subtotal >= 150 ? 0 : 5;
+        $coupons = Coupon::where('start_date', '<=', now())->where('end_date', '>=', now())->get();
 
         return view('shop.checkout', [
             'cart' => $cart,
-            'coupons' => Coupon::where('start_date', '<=', now())->where('end_date', '>=', now())->get(),
+            'coupons' => $coupons,
+            'couponPreviews' => $coupons
+                ->filter(fn (Coupon $coupon): bool => $this->couponCanApply($coupon, $subtotal))
+                ->mapWithKeys(fn (Coupon $coupon): array => [
+                    $coupon->code => [
+                        'discount' => $this->discountFor($coupon, $subtotal),
+                    ],
+                ]),
             'items' => $cart->items,
             'paymentMethods' => PaymentMethod::orderBy('name')->get(),
-            'subtotal' => $cart->items->sum(fn (CartItem $item): float => (float) $item->price * $item->quantity),
+            'shippingFee' => $shippingFee,
+            'subtotal' => $subtotal,
         ]);
     }
 
@@ -122,6 +133,19 @@ class CheckoutController extends Controller
                 $query->whereNull('min_order')->orWhere('min_order', '<=', $subtotal);
             })
             ->first();
+    }
+
+    private function couponCanApply(Coupon $coupon, float $subtotal): bool
+    {
+        if ($coupon->usage_limit !== null && $coupon->used_count >= $coupon->usage_limit) {
+            return false;
+        }
+
+        if ($coupon->min_order !== null && (float) $coupon->min_order > $subtotal) {
+            return false;
+        }
+
+        return true;
     }
 
     private function discountFor(Coupon $coupon, float $subtotal): float

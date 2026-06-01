@@ -76,9 +76,42 @@ html {
     align-items: center;
     gap: 0.45rem;
     padding-inline: 1rem !important;
-    border: 1px solid rgba(212, 175, 55, 0.22);
+    border: 0;
     border-radius: 999px;
+    background: transparent;
+}
+
+.cart-pill:hover,
+.cart-pill:focus {
     background: rgba(212, 175, 55, 0.08);
+}
+
+.nav-profile-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.nav-avatar,
+.admin-profile-avatar {
+    display: inline-grid;
+    width: 34px;
+    height: 34px;
+    flex: 0 0 34px;
+    overflow: hidden;
+    place-items: center;
+    color: #050505;
+    background: var(--gold);
+    border: 1px solid rgba(212, 175, 55, 0.55);
+    border-radius: 50%;
+    font-size: 0.95rem;
+}
+
+.nav-avatar img,
+.admin-profile-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
 }
 
 .nav-counter {
@@ -113,6 +146,21 @@ html {
 .btn-gold:focus {
     color: #050505;
     background: var(--gold-dark);
+}
+
+// Add near button styles.
+.btn-outline-gold {
+    color: var(--gold);
+    border-color: rgba(212, 175, 55, 0.72);
+    background: rgba(212, 175, 55, 0.08);
+    font-weight: 700;
+}
+
+.btn-outline-gold:hover,
+.btn-outline-gold:focus {
+    color: #050505;
+    background: var(--gold);
+    border-color: var(--gold);
 }
 
 .shop-hero {
@@ -288,7 +336,7 @@ html {
 
 .section-heading span,
 .catalog-topbar span,
-.promo-banner span {
+.promo-banner-slide span {
     color: var(--gold);
     font-weight: 700;
     text-transform: uppercase;
@@ -297,7 +345,7 @@ html {
 
 .section-heading h2,
 .catalog-topbar h2,
-.promo-banner h2 {
+.promo-banner-slide h2 {
     margin: 0;
     font-size: clamp(3rem, 4.4vw, 5.2rem);
     font-weight: 800;
@@ -614,44 +662,33 @@ html {
     margin-bottom: 2rem;
 }
 
-.promo-grid {
-    display: grid;
-    grid-template-columns: minmax(0, 1.35fr) minmax(320px, 0.65fr);
-    gap: 1.25rem;
-}
-
-.promo-banner {
+.promo-carousel {
     position: relative;
-    display: grid;
-    grid-template-columns: minmax(0, 1fr);
-    align-content: end;
-    min-height: 300px;
     overflow: hidden;
-    padding: clamp(1.5rem, 3vw, 2rem);
-    color: var(--text);
-    background:
-        linear-gradient(180deg, rgba(8, 8, 8, 0), rgba(8, 8, 8, 0.62)),
-        var(--banner-image, url('https://images.unsplash.com/photo-1493711662062-fa541adb3fc8?q=80&w=1400&auto=format&fit=crop')) center / cover;
     border: 1px solid rgba(212, 175, 55, 0.2);
     border-radius: 14px;
     box-shadow: 0 24px 56px rgba(0, 0, 0, 0.32);
+}
+
+.promo-banner-slide {
+    position: relative;
+    display: grid;
+    min-height: clamp(430px, 45vw, 660px);
+    overflow: hidden;
+    align-items: end;
+    padding: clamp(2rem, 5vw, 4.5rem);
+    color: var(--text);
     isolation: isolate;
 }
 
-.promo-banner::before {
+.promo-banner-slide::before {
     position: absolute;
     inset: 0;
     z-index: -1;
     content: '';
     background:
-        linear-gradient(90deg, rgba(0, 0, 0, 0.62), rgba(0, 0, 0, 0.04)),
-        rgba(0, 0, 0, 0.02);
-}
-
-.promo-banner-featured {
-    grid-row: span 2;
-    min-height: 620px;
-    padding: clamp(2rem, 4vw, 3rem);
+        linear-gradient(90deg, rgba(0, 0, 0, 0.82), rgba(0, 0, 0, 0.42) 48%, rgba(0, 0, 0, 0.1)),
+        linear-gradient(0deg, rgba(0, 0, 0, 0.68), rgba(0, 0, 0, 0.08) 58%, rgba(0, 0, 0, 0.2));
 }
 
 .promo-banner-media {
@@ -662,40 +699,61 @@ html {
     transition: transform 320ms ease;
 }
 
-.promo-banner:hover .promo-banner-media {
+.promo-carousel:hover .promo-banner-media {
     transform: scale(1.04);
 }
 
 .promo-banner-content {
-    max-width: 680px;
-    padding: 1rem;
-    margin: -1rem;
-    background: linear-gradient(90deg, rgba(0, 0, 0, 0.46), rgba(0, 0, 0, 0));
-    border-radius: 10px;
+    max-width: 780px;
+    padding-inline-end: 3rem;
 }
 
-.promo-banner .btn {
-    justify-self: start;
+.promo-banner-content .btn {
     margin-top: 1.25rem;
 }
 
-.promo-banner-featured h2 {
+.promo-banner-slide h2 {
     max-width: 760px;
     font-size: clamp(3rem, 5vw, 6.2rem);
     line-height: 0.96;
 }
 
-.promo-banner:not(.promo-banner-featured) h2 {
-    font-size: clamp(1.7rem, 2.4vw, 2.6rem);
-    line-height: 1.05;
-}
-
-.promo-banner p {
+.promo-banner-slide p {
     max-width: 680px;
     margin: 0.85rem 0 0;
     color: rgba(255, 255, 255, 0.86);
     font-size: clamp(1rem, 1.4vw, 1.18rem);
     font-weight: 500;
+}
+
+.promo-carousel .carousel-indicators {
+    right: auto;
+    bottom: 1.25rem;
+    left: clamp(2rem, 5vw, 4.5rem);
+    justify-content: flex-start;
+    margin: 0;
+}
+
+.promo-carousel .carousel-indicators [data-bs-target] {
+    width: 2.75rem;
+    height: 0.28rem;
+    border: 0;
+    border-radius: 999px;
+    background-color: rgba(255, 255, 255, 0.48);
+}
+
+.promo-carousel .carousel-indicators .active {
+    background-color: var(--gold);
+}
+
+.promo-carousel-control {
+    width: clamp(3rem, 6vw, 5.5rem);
+    opacity: 0.84;
+}
+
+.promo-carousel-control:hover,
+.promo-carousel-control:focus {
+    opacity: 1;
 }
 
 .shop-footer {
@@ -712,9 +770,13 @@ html {
 
 .footer-top {
     display: grid;
-    grid-template-columns: minmax(280px, 1.5fr) repeat(3, minmax(160px, 0.8fr)) minmax(280px, 1.2fr);
-    gap: clamp(2rem, 4vw, 4rem);
+    grid-template-columns: minmax(320px, 1.45fr) repeat(2, minmax(160px, 0.55fr)) minmax(280px, 0.85fr);
+    gap: clamp(1.5rem, 4vw, 3.5rem);
     align-items: start;
+    padding: clamp(1.5rem, 3vw, 2.5rem);
+    background: rgba(255, 255, 255, 0.035);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 14px;
 }
 
 .footer-logo {
@@ -735,6 +797,23 @@ html {
     color: #b8b8b8;
 }
 
+.footer-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 1.25rem;
+}
+
+.footer-badges span {
+    padding: 0.42rem 0.72rem;
+    color: var(--gold);
+    background: rgba(212, 175, 55, 0.1);
+    border: 1px solid rgba(212, 175, 55, 0.2);
+    border-radius: 999px;
+    font-size: 0.78rem;
+    font-weight: 800;
+}
+
 .footer-socials {
     display: flex;
     gap: 0.55rem;
@@ -746,6 +825,8 @@ html {
     place-items: center;
     width: 36px;
     height: 36px;
+    flex: 0 0 36px;
+    margin-bottom: 0;
     color: var(--text);
     background:
         linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0)),
@@ -792,13 +873,33 @@ html {
     color: var(--gold);
 }
 
-.footer-contact p {
+.shop-footer .footer-socials a {
+    display: grid;
+    width: 36px;
+    height: 36px;
+    place-items: center;
+    border-radius: 50%;
+}
+
+.footer-contact-item {
     display: flex;
     align-items: center;
     gap: 0.65rem;
+    min-height: 42px;
+    margin-bottom: 0.65rem !important;
+    padding: 0.65rem 0.75rem;
+    color: var(--muted);
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 10px;
 }
 
-.footer-contact i {
+.shop-footer a.footer-contact-item {
+    width: 100%;
+}
+
+.footer-contact-item i {
+    flex: 0 0 auto;
     color: var(--gold);
 }
 
@@ -839,9 +940,14 @@ html {
     justify-content: space-between;
     align-items: center;
     gap: 1rem;
-    margin-top: 4rem;
-    padding-top: 1.5rem;
+    margin-top: 1.25rem;
+    padding: 1.25rem 0.25rem 0;
     border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.footer-bottom strong {
+    color: var(--gold);
+    font-size: 0.92rem;
 }
 
 .footer-bottom div {
@@ -862,6 +968,11 @@ html {
 
 .zoom-frame img {
     transition: transform 320ms ease;
+}
+
+// Add near product detail image styles.
+.zoom-frame {
+    cursor: zoom-in;
 }
 
 .zoom-frame:hover img {
@@ -940,7 +1051,7 @@ html {
 
 .buy-panel {
     display: grid;
-    grid-template-columns: 1fr 7rem auto auto;
+    grid-template-columns: 1fr 7rem auto;
     gap: 0.9rem;
     align-items: center;
     padding: 1.25rem;
@@ -1102,6 +1213,13 @@ html {
     font-weight: 800;
 }
 
+// Add near auth styles.
+.admin-login-switch {
+    margin-top: 0.75rem;
+    color: var(--muted);
+    font-size: 0.92rem;
+}
+
 .profile-avatar {
     display: flex;
     align-items: center;
@@ -1174,6 +1292,101 @@ html {
     width: 5.5rem;
     height: 5.5rem;
     border-radius: 12px;
+}
+
+// Add near cart styles.
+.quantity-stepper {
+    display: inline-flex;
+    align-items: center;
+    overflow: hidden;
+    color: var(--text);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+}
+
+.quantity-stepper-button {
+    display: grid;
+    width: 2.35rem;
+    height: 2.35rem;
+    place-items: center;
+    color: var(--text);
+    background: transparent;
+    border: 0;
+}
+
+.quantity-stepper-button:hover,
+.quantity-stepper-button:focus {
+    color: var(--gold);
+    background: rgba(212, 175, 55, 0.08);
+}
+
+.quantity-stepper-value {
+    min-width: 2.5rem;
+    text-align: center;
+    font-weight: 800;
+}
+
+// Add near product detail styles.
+.product-breadcrumb {
+    color: var(--muted);
+    font-size: 0.9rem;
+}
+
+.product-breadcrumb .breadcrumb {
+    --bs-breadcrumb-divider-color: var(--muted);
+}
+
+.product-breadcrumb a {
+    color: var(--muted);
+    text-decoration: none;
+}
+
+.product-breadcrumb a:hover,
+.product-breadcrumb .active {
+    color: var(--gold);
+}
+
+// Add near admin styles.
+.admin-login-shell {
+    display: grid;
+    min-height: calc(100vh - 4rem);
+    place-items: center;
+    padding: clamp(2rem, 5vw, 5rem);
+}
+
+.admin-login-card {
+    width: min(100%, 520px);
+    padding: clamp(1.75rem, 4vw, 3rem);
+    background:
+        linear-gradient(145deg, rgba(212, 175, 55, 0.12), rgba(255, 255, 255, 0.02)),
+        var(--surface);
+    border: 1px solid rgba(212, 175, 55, 0.22);
+    border-radius: 14px;
+    box-shadow: 0 26px 70px rgba(0, 0, 0, 0.42);
+}
+
+.admin-login-heading {
+    margin-bottom: 1.5rem;
+    text-align: center;
+}
+
+.admin-login-heading span {
+    color: var(--gold);
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+.admin-login-heading h2 {
+    margin: 0.5rem 0;
+    font-weight: 800;
+}
+
+.admin-login-heading p {
+    margin-bottom: 0;
+    color: var(--muted);
 }
 
 .admin-layout {
@@ -1605,6 +1818,21 @@ html {
     border-radius: 12px;
 }
 
+.admin-table-image,
+.admin-form-image {
+    width: 72px;
+    height: 72px;
+    object-fit: cover;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+}
+
+.admin-form-image {
+    display: block;
+    margin-top: 0.75rem;
+}
+
 .admin-product-list span {
     display: grid;
     min-width: 0;
@@ -1711,14 +1939,8 @@ html {
         grid-template-columns: 1fr;
     }
 
-    .promo-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .promo-banner,
-    .promo-banner-featured {
-        grid-row: auto;
-        min-height: 420px;
+    .promo-banner-slide {
+        min-height: 440px;
         padding: 2rem;
     }
 
@@ -1809,14 +2031,26 @@ html {
         padding-block: 3rem 1rem;
     }
 
-    .promo-banner,
-    .promo-banner-featured {
+    .promo-banner-slide {
         min-height: 360px;
         padding: 1.35rem;
     }
 
-    .promo-banner-featured h2 {
+    .promo-banner-slide h2 {
         font-size: clamp(2.4rem, 12vw, 3.4rem);
+    }
+
+    .promo-banner-content {
+        padding-inline-end: 0;
+    }
+
+    .promo-carousel .carousel-indicators {
+        bottom: 0.85rem;
+        left: 1.35rem;
+    }
+
+    .promo-carousel-control {
+        display: none;
     }
 
     .panel-heading,

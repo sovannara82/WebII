@@ -50,6 +50,27 @@
         $availableTables = $tables ?? collect($adminMenuGroups)->flatten(1)->pluck('table')->all();
     @endphp
 
+    @php
+        $adminProfileImage = null;
+
+        if (Auth::check() && filled(Auth::user()->image)) {
+            if (Illuminate\Support\Str::startsWith(Auth::user()->image, ['http://', 'https://', '/'])) {
+                $adminProfileImage = Auth::user()->image;
+            } elseif (Illuminate\Support\Str::startsWith(Auth::user()->image, 'storage/')) {
+                $adminProfileImage = asset(Auth::user()->image);
+            } else {
+                $adminProfileImage = asset('storage/'.Auth::user()->image);
+            }
+
+            $adminProfileImage .= (str_contains($adminProfileImage, '?') ? '&' : '?').'v='.Auth::user()->updated_at?->timestamp;
+        }
+    @endphp
+
+    @if (request()->routeIs('admin.login'))
+        <main>
+            @yield('content')
+        </main>
+    @else
     <section class="admin-layout">
         <aside class="admin-sidebar">
             <a class="admin-logo" href="{{ route('admin.dashboard') }}">Infinity Figures</a>
@@ -94,16 +115,11 @@
                     <p>@yield('admin-subtitle', 'Manage Infinity Figures operations.')</p>
                 </div>
                 <div class="admin-tools">
-                    
-                    <div class="admin-profile">
-                        <i class="bi bi-person-circle"></i>
-                        {{ Auth::user()->name ?? 'Admin' }}
-                    </div>
-                    <a class="btn btn-outline-light" href="{{ route('logout') }}"
+                    <a class="btn btn-outline-light" href="{{ route('admin.logout') }}"
                        onclick="event.preventDefault(); document.getElementById('admin-logout-form').submit();">
                         Logout
                     </a>
-                    <form id="admin-logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
+                    <form id="admin-logout-form" action="{{ route('admin.logout') }}" method="POST" class="d-none">
                         @csrf
                     </form>
                 </div>
@@ -112,5 +128,6 @@
             @yield('content')
         </main>
     </section>
+    @endif
 </body>
 </html>

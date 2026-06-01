@@ -1,9 +1,17 @@
-@extends('layouts.customer')
+@extends('layouts.app')
 
 @section('title', $product->name.' - Infinity Figures')
 
 @section('content')
     <section class="container product-detail-page py-5">
+        <nav class="product-breadcrumb" aria-label="breadcrumb">
+            <ol class="breadcrumb mb-4">
+                <li class="breadcrumb-item"><a href="{{ route('shop.index') }}">Home</a></li>
+                <li class="breadcrumb-item"><a href="{{ route('products.index', ['category' => $product->category->id]) }}">{{ $product->category->name }}</a></li>
+                <li class="breadcrumb-item active" aria-current="page">{{ $product->name }}</li>
+            </ol>
+        </nav>
+
         <div class="row g-5 align-items-start">
             <div class="col-lg-6">
                 <div class="product-detail-image zoom-frame">
@@ -12,11 +20,11 @@
                 <div class="row g-3 mt-2">
                     @forelse ($product->images->take(4) as $image)
                         <div class="col-4">
-                            <img class="detail-thumb" src="{{ $image->image }}" alt="{{ $product->name }}">
+                            <img class="detail-thumb" src="{{ $image->image }}" data-full="{{ $image->image }}" alt="{{ $product->name }}" loading="lazy">
                         </div>
                     @empty
                         <div class="col-4">
-                            <img class="detail-thumb" src="https://images.unsplash.com/photo-1608889175123-8ee362201f81?auto=format&fit=crop&w=400&q=80" alt="{{ $product->name }}">
+                            <img class="detail-thumb" src="https://images.unsplash.com/photo-1608889175123-8ee362201f81?auto=format&fit=crop&w=400&q=80" data-full="https://images.unsplash.com/photo-1608889175123-8ee362201f81?auto=format&fit=crop&w=900&q=80" alt="{{ $product->name }}" loading="lazy">
                         </div>
                     @endforelse
                 </div>
@@ -46,8 +54,7 @@
                         <div class="h3 fw-bold mb-0">${{ number_format((float) $product->price, 2) }}</div>
                     </div>
                     <input class="form-control" name="quantity" type="number" value="1" min="1" max="20" aria-label="Quantity">
-                    <button class="btn btn-gold btn-lg add-cart-pop" type="submit" @disabled($product->stock <= 0)>Add to cart</button>
-                    <a class="btn btn-outline-light btn-lg" href="{{ route('checkout.create') }}">Buy now</a>
+                    <button class="btn btn-gold btn-lg add-cart-pop" type="submit" @disabled($product->stock <= 0)>Add to Cart</button>
                 </form>
 
                 <div class="stock-strip {{ $product->stock <= 0 ? 'sold-out' : ($product->stock <= 6 ? 'low-stock' : '') }}">
@@ -69,22 +76,17 @@
             <div class="col-lg-7">
                 <div class="detail-panel">
                     <h2>Product description</h2>
-                    <p>{{ $product->description ?: 'A collector-ready figure with shelf presence, crisp paint details, and display-friendly proportions.' }}</p>
+                    <p>{{ $product->description ?: 'A customer-ready figure with shelf presence, crisp paint details, and display-friendly proportions.' }}</p>
                 </div>
             </div>
             <div class="col-lg-5">
                 <div class="product-specs">
                     <div><span>Character</span><strong>{{ $product->character_name ?? 'Original' }}</strong></div>
-                    <div><span>Series</span><strong>{{ $product->series ?? 'Collector line' }}</strong></div>
+                    <div><span>Series</span><strong>{{ $product->series ?? 'Customer line' }}</strong></div>
                     <div><span>Material</span><strong>{{ $product->material ?? 'PVC / ABS' }}</strong></div>
                     <div><span>Height</span><strong>{{ $product->height ? $product->height.' cm' : 'TBA' }}</strong></div>
                 </div>
             </div>
-        </div>
-
-        <div class="detail-panel mt-4">
-            <h2>Character information</h2>
-            <p>{{ $product->character_name ?? 'This release' }} from {{ $product->series ?? 'the collector line' }} is curated for anime merchandise fans who want a display piece with strong character identity and clean finishing.</p>
         </div>
 
         @if ($relatedProducts->isNotEmpty())
@@ -94,7 +96,7 @@
                     @foreach ($relatedProducts as $relatedProduct)
                         <div class="col-md-3">
                             <a class="related-card" href="{{ route('shop.show', $relatedProduct) }}">
-                                <img src="{{ $relatedProduct->primaryImage?->image ?? 'https://images.unsplash.com/photo-1618336753974-aae8e04506aa?auto=format&fit=crop&w=500&q=80' }}" alt="{{ $relatedProduct->name }}">
+                                <img src="{{ $relatedProduct->primaryImage?->image ?? 'https://images.unsplash.com/photo-1618336753974-aae8e04506aa?auto=format&fit=crop&w=500&q=80' }}" alt="{{ $relatedProduct->name }}" loading="lazy">
                                 <strong>{{ $relatedProduct->name }}</strong>
                             </a>
                         </div>
@@ -125,7 +127,7 @@
                     @endauth
                 </div>
                 <div class="col-lg-7">
-                    <h2 class="h4 fw-bold mb-3">Collector reviews</h2>
+                    <h2 class="h4 fw-bold mb-3">Customer reviews</h2>
                     @forelse ($product->reviews as $review)
                         <div class="admin-panel mb-3">
                             <div class="d-flex justify-content-between">
@@ -145,4 +147,19 @@
             </div>
         </div>
     </section>
+
+    <script>
+        document.querySelectorAll('.detail-thumb[data-full]').forEach((thumbnail) => {
+            thumbnail.addEventListener('click', () => {
+                const mainImage = document.querySelector('.product-detail-image img');
+
+                if (! mainImage) {
+                    return;
+                }
+
+                mainImage.src = thumbnail.dataset.full;
+                mainImage.alt = thumbnail.alt;
+            });
+        });
+    </script>
 @endsection

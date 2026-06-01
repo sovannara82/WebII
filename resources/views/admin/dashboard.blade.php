@@ -8,12 +8,12 @@
     <section class="admin-hero-panel mb-4">
         <div>
             <span>Today at Infinity Figures</span>
-            <h2>Keep the collector pipeline moving.</h2>
+            <h2>Keep the customer pipeline moving.</h2>
             <p>Review new orders, protect stock levels, and jump into the data screens your team uses most.</p>
         </div>
         <div class="admin-hero-stats">
             <div>
-                <small>This month</small>
+                <small>This Month</small>
                 <strong>${{ number_format((float) $monthRevenue, 2) }}</strong>
                 <span>
                     @if ($monthlyRevenueChange === null)
@@ -24,7 +24,7 @@
                 </span>
             </div>
             <div>
-                <small>Average order</small>
+                <small>Average Order</small>
                 <strong>${{ number_format((float) $averageOrderValue, 2) }}</strong>
                 <span>{{ $ordersCount }} total orders</span>
             </div>
@@ -34,17 +34,17 @@
     <div class="admin-metric-grid mb-4">
         <div class="metric-card">
             <div class="card-icon"><i class="bi bi-currency-dollar"></i></div>
-            <span>Total sales</span>
+            <span>Total Sales</span>
             <strong>${{ number_format((float) $revenue, 2) }}</strong>
         </div>
         <div class="metric-card">
             <div class="card-icon"><i class="bi bi-box-seam"></i></div>
-            <span>Total products</span>
+            <span>Total Products</span>
             <strong>{{ $productsCount }}</strong>
         </div>
         <div class="metric-card">
             <div class="card-icon"><i class="bi bi-receipt"></i></div>
-            <span>Total orders</span>
+            <span>Total Orders</span>
             <strong>{{ $ordersCount }}</strong>
         </div>
         <div class="metric-card">
@@ -54,7 +54,7 @@
         </div>
         <div class="metric-card danger-card">
             <div class="card-icon"><i class="bi bi-exclamation-triangle"></i></div>
-            <span>Low stock alerts</span>
+            <span>Low Stock Alerts</span>
             <strong>{{ $lowStockProducts->count() }}</strong>
         </div>
     </div>
@@ -64,10 +64,10 @@
             <div class="admin-panel admin-table-panel">
                 <div class="panel-heading">
                     <div>
-                        <span>Order flow</span>
-                        <h2>Recent orders</h2>
+                        <span>Order Flow</span>
+                        <h2>Recent Orders</h2>
                     </div>
-                    <a class="btn btn-outline-light btn-sm" href="{{ route('admin.data', ['table' => 'orders']) }}">View all</a>
+                    <a class="btn btn-outline-light btn-sm" href="{{ route('admin.data', ['table' => 'orders']) }}">View All</a>
                 </div>
 
                 <div class="table-responsive">

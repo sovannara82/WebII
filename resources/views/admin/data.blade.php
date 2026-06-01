@@ -6,8 +6,27 @@
 
 @section('content')
             @php
-                $createFormColumns = collect($columns)->reject(fn (string $column): bool => in_array($column, ['id', 'created_at', 'updated_at', 'user_id', 'used_count', 'remember_token', 'email_verified_at'], true));
-                $editFormColumns = $createFormColumns->reject(fn (string $column): bool => $column === 'password');
+                $baseFormColumns = collect($columns)->reject(fn (string $column): bool => in_array($column, ['id', 'created_at', 'updated_at', 'user_id', 'used_count', 'remember_token', 'email_verified_at'], true));
+                $createFormColumns = $baseFormColumns;
+                $createFormColumns = $table === 'users'
+                    ? $createFormColumns->reject(fn (string $column): bool => $column === 'role_id')
+                    : $createFormColumns;
+                $editFormColumns = $baseFormColumns->reject(fn (string $column): bool => $column === 'password');
+                $imageUrl = function (?string $value): ?string {
+                    if (blank($value)) {
+                        return null;
+                    }
+
+                    if (Str::startsWith($value, ['http://', 'https://', '/'])) {
+                        return $value;
+                    }
+
+                    if (Str::startsWith($value, 'storage/')) {
+                        return asset($value);
+                    }
+
+                    return asset('storage/'.$value);
+                };
             @endphp
 
             @if ($errors->any())
@@ -77,7 +96,13 @@
 
                                 <tr>
                                     @foreach ($columns as $column)
-                                        <td>{{ Str::limit((string) $record->{$column}, 60) }}</td>
+                                        <td>
+                                            @if ($column === 'image' && filled($record->{$column}))
+                                                <img class="admin-table-image" src="{{ $imageUrl($record->{$column}) }}" alt="{{ $table }} image">
+                                            @else
+                                                {{ Str::limit((string) $record->{$column}, 60) }}
+                                            @endif
+                                        </td>
                                     @endforeach
                                     <td class="text-end">
                                         @if ($recordKey)
@@ -156,10 +181,17 @@
                                                         <option value="1" @selected((bool) $fieldValue)>Yes</option>
                                                         <option value="0" @selected(! (bool) $fieldValue)>No</option>
                                                     </select>
+                                                @elseif ($table === 'users' && $column === 'role_id')
+                                                    <select class="form-select" id="update-{{ $table }}-{{ $recordKey }}-{{ $column }}" name="{{ $column }}" @disabled($record->role?->name === 'Admin')>
+                                                        @foreach ($roles as $role)
+                                                            @continue($role->name === 'Admin' && $record->role?->name !== 'Admin')
+                                                            <option value="{{ $role->id }}" @selected((int) $fieldValue === $role->id)>{{ $role->name }}</option>
+                                                        @endforeach
+                                                    </select>
                                                 @elseif ($column === 'image')
                                                     <input class="form-control" id="update-{{ $table }}-{{ $recordKey }}-{{ $column }}" name="{{ $column }}" type="file" accept="image/*">
                                                     @if (filled($record->{$column}))
-                                                        <p class="admin-muted small mb-0 mt-2">Current: {{ Str::limit((string) $record->{$column}, 80) }}</p>
+                                                        <img class="admin-form-image" src="{{ $imageUrl($record->{$column}) }}" alt="{{ $table }} image preview">
                                                     @endif
                                                 @elseif (in_array($column, ['start_date', 'end_date'], true))
                                                     <input class="form-control" id="update-{{ $table }}-{{ $recordKey }}-{{ $column }}" name="{{ $column }}" type="date" value="{{ $fieldValue }}">

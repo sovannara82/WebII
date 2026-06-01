@@ -114,10 +114,11 @@ class AdminDataController extends Controller
             : DB::table($table)->paginate(12)->withQueryString();
 
         return view('admin.data', [
-            'columns' => Schema::getColumnListing($table),
+            'columns' => $this->visibleColumns($table),
             'creatableTables' => $this->creatableTables,
             'editableTables' => $this->editableTables,
             'records' => $records,
+            'roles' => Role::orderBy('name')->get(),
             'table' => $table,
             'tables' => array_keys($this->models),
         ]);
@@ -151,6 +152,11 @@ class AdminDataController extends Controller
         abort_unless($model, 422, 'This table is read-only from the generic admin screen.');
 
         $record = $model::findOrFail($id);
+
+        if ($table === 'roles') {
+            $this->guardAdminRoleUpdate($record, $request);
+        }
+
         $record->update($this->validatedData($request, $table, $record));
 
         return back()->with('status', "{$table} record updated.");
@@ -163,7 +169,17 @@ class AdminDataController extends Controller
         $model = $this->models[$table];
         abort_unless($model, 422, 'This table is read-only from the generic admin screen.');
 
-        $model::findOrFail($id)->delete();
+        $record = $model::findOrFail($id);
+
+        if ($table === 'users') {
+            $this->guardAdminUserDeletion($record);
+        }
+
+        if ($table === 'roles') {
+            $this->guardAdminRoleDeletion($record);
+        }
+
+        $record->delete();
 
         return back()->with('status', "{$table} record deleted.");
     }
@@ -176,7 +192,7 @@ class AdminDataController extends Controller
         $data = match ($table) {
             'roles' => $request->validate(['name' => ['required', 'max:50', $this->uniqueRule('roles', 'name', $record)]]),
             'users' => $request->validate([
-                'role_id' => ['nullable', 'integer', Rule::exists('roles', 'id')],
+                'role_id' => [$record ? 'nullable' : 'prohibited', 'integer', Rule::exists('roles', 'id')],
                 'name' => ['required', 'max:255'],
                 'username' => ['nullable', 'max:50', $this->uniqueRule('users', 'username', $record)],
                 'email' => ['required', 'email', 'max:255', $this->uniqueRule('users', 'email', $record)],
@@ -249,6 +265,12 @@ class AdminDataController extends Controller
         }
 
         if ($table === 'users') {
+            if ($record === null) {
+                $data['role_id'] = $this->customerRoleId();
+            } elseif ($record instanceof User) {
+                $data['role_id'] = $this->validatedUserRoleId($record, $data['role_id'] ?? null);
+            }
+
             if (filled($data['password'] ?? null)) {
                 $data['password'] = Hash::make($data['password']);
             } else {
@@ -261,6 +283,72 @@ class AdminDataController extends Controller
         }
 
         return $data;
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function visibleColumns(string $table): array
+    {
+        $columns = Schema::getColumnListing($table);
+
+        if ($table === 'banners') {
+            return array_values(array_diff($columns, ['button_text']));
+        }
+
+        return $columns;
+    }
+
+    private function customerRoleId(): int
+    {
+        return Role::firstOrCreate(['name' => 'Customer'])->id;
+    }
+
+    private function adminRoleId(): ?int
+    {
+        return Role::where('name', 'Admin')->value('id');
+    }
+
+    private function validatedUserRoleId(User $user, ?int $roleId): int
+    {
+        $adminRoleId = $this->adminRoleId();
+
+        if ($user->role_id === $adminRoleId) {
+            abort_if($roleId !== null && $roleId !== $adminRoleId, 422, 'The only admin account cannot be demoted.');
+
+            return $user->role_id;
+        }
+
+        abort_if($roleId !== null && $roleId === $adminRoleId, 422, 'Only one admin account is allowed.');
+
+        return $roleId ?? $user->role_id ?? $this->customerRoleId();
+    }
+
+    private function guardAdminUserDeletion(Model $record): void
+    {
+        abort_if(
+            $record instanceof User && $record->role_id === $this->adminRoleId(),
+            422,
+            'The only admin account cannot be deleted.'
+        );
+    }
+
+    private function guardAdminRoleUpdate(Model $record, Request $request): void
+    {
+        abort_if(
+            $record instanceof Role && $record->name === 'Admin' && $request->input('name') !== 'Admin',
+            422,
+            'The Admin role cannot be renamed because only one admin account is allowed.'
+        );
+    }
+
+    private function guardAdminRoleDeletion(Model $record): void
+    {
+        abort_if(
+            $record instanceof Role && $record->name === 'Admin',
+            422,
+            'The Admin role cannot be deleted because only one admin account is allowed.'
+        );
     }
 
     private function uniqueRule(string $table, string $column, ?Model $record): Unique

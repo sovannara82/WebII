@@ -1,16 +1,16 @@
-@extends('layouts.customer')
+@extends('layouts.app')
 
 @section('content')
 <section class="auth-shell">
     <div class="auth-card">
         <div class="auth-art">
-            <span>Collector access</span>
+            <span>Customer access</span>
             <h1>Welcome back to Infinity Figures</h1>
             <p>Track orders, save wishlist figures, and check out faster when the next drop lands.</p>
         </div>
 
         <div class="auth-panel">
-            <h2>{{ __('Login') }}</h2>
+            <h2>{{ __('Customer Login') }}</h2>
             <p class="admin-muted">Sign in to continue your figure hunt.</p>
 
             <form method="POST" action="{{ route('login') }}">
@@ -55,7 +55,7 @@
                         </div>
 
                         <button type="submit" class="btn btn-gold btn-lg w-100">{{ __('Login') }}</button>
-                        <p class="auth-switch">New collector? <a href="{{ route('register') }}">Create an account</a></p>
+                        <p class="auth-switch">New customer? <a href="{{ route('register') }}">Create an account</a></p>
                     </form>
         </div>
     </div>

@@ -1,4 +1,4 @@
-@extends('layouts.customer')
+@extends('layouts.app')
 
 @section('title', 'Cart - Infinity Figures')
 
@@ -14,11 +14,19 @@
                         <div>
                             <strong>{{ $item->product->name }}</strong>
                             <p class="admin-muted mb-0">${{ number_format((float) $item->price, 2) }}</p>
-                            <form class="d-flex gap-2 mt-2" action="{{ route('cart-items.update', $item) }}" method="POST">
+                            <form class="quantity-stepper-form mt-2" action="{{ route('cart-items.update', $item) }}" method="POST">
                                 @csrf
                                 @method('PATCH')
-                                <input class="form-control form-control-sm" name="quantity" type="number" value="{{ $item->quantity }}" min="1" max="20" style="width: 90px">
-                                <button class="btn btn-sm btn-outline-light" type="submit">Update</button>
+                                <input class="quantity-stepper-input" name="quantity" type="hidden" value="{{ $item->quantity }}" min="1" max="20">
+                                <div class="quantity-stepper" data-min="1" data-max="20">
+                                    <button class="quantity-stepper-button" type="button" data-step="-1" aria-label="Decrease quantity">
+                                        <i class="bi bi-dash"></i>
+                                    </button>
+                                    <span class="quantity-stepper-value">{{ $item->quantity }}</span>
+                                    <button class="quantity-stepper-button" type="button" data-step="1" aria-label="Increase quantity">
+                                        <i class="bi bi-plus"></i>
+                                    </button>
+                                </div>
                             </form>
                         </div>
                         <span class="ms-auto fw-bold">${{ number_format((float) $item->price * $item->quantity, 2) }}</span>
@@ -47,4 +55,34 @@
             </aside>
         </div>
     </section>
+
+    <script>
+        document.querySelectorAll('.quantity-stepper-form').forEach((form) => {
+            const input = form.querySelector('.quantity-stepper-input');
+            const value = form.querySelector('.quantity-stepper-value');
+            const stepper = form.querySelector('.quantity-stepper');
+
+            if (! input || ! value || ! stepper) {
+                return;
+            }
+
+            form.querySelectorAll('[data-step]').forEach((button) => {
+                button.addEventListener('click', () => {
+                    const min = Number(stepper.dataset.min || input.min || 1);
+                    const max = Number(stepper.dataset.max || input.max || 20);
+                    const step = Number(button.dataset.step);
+                    const currentQuantity = Number(input.value || min);
+                    const nextQuantity = Math.min(max, Math.max(min, currentQuantity + step));
+
+                    if (nextQuantity === currentQuantity) {
+                        return;
+                    }
+
+                    input.value = String(nextQuantity);
+                    value.textContent = String(nextQuantity);
+                    form.submit();
+                });
+            });
+        });
+    </script>
 @endsection

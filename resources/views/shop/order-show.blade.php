@@ -1,4 +1,4 @@
-@extends('layouts.customer')
+@extends('layouts.app')
 
 @section('title', 'Order #'.$order->id.' - Infinity Figures')
 

@@ -1,11 +1,11 @@
-@extends('layouts.customer')
+@extends('layouts.app')
 
 @section('content')
 <section class="auth-shell">
     <div class="auth-card">
         <div class="auth-art register-art">
             <span>Join the shop</span>
-            <h1>Start your collector profile</h1>
+            <h1>Start your customer profile</h1>
             <p>Save grails, manage orders, and keep your anime figure wishlist ready.</p>
         </div>
 

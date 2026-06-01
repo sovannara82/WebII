@@ -7,15 +7,43 @@ use App\Models\Brand;
 use App\Models\Category;
 use App\Models\Product;
 use Illuminate\Contracts\View\View;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class ShopController extends Controller
 {
+    public function home(): View
+    {
+        return view('shop.home', [
+            'banners' => Banner::latest()->take(3)->get(),
+            'categories' => Category::withCount('products')->orderBy('name')->get(),
+            'heroProducts' => Product::active()
+                ->with(['primaryImage', 'brand', 'category'])
+                ->latest()
+                ->take(4)
+                ->get(),
+            'newArrivals' => Product::active()
+                ->with(['primaryImage', 'brand', 'category'])
+                ->latest()
+                ->take(8)
+                ->get(),
+            'bestSellers' => Product::active()
+                ->with(['primaryImage', 'brand', 'category'])
+                ->withSum('orderItems as units_sold', 'quantity')
+                ->orderByDesc(DB::raw('COALESCE(units_sold, 0)'))
+                ->latest()
+                ->take(8)
+                ->get(),
+        ]);
+    }
+
     public function index(Request $request): View
     {
         $products = Product::query()
             ->active()
             ->with(['brand', 'category', 'primaryImage'])
+            ->withSum('orderItems as units_sold', 'quantity')
             ->when($request->filled('category'), function ($query) use ($request): void {
                 $query->whereHas('category', fn ($categoryQuery) => $categoryQuery->where('id', $request->integer('category')));
             })
@@ -51,15 +79,32 @@ class ShopController extends Controller
                         ->orWhere('series', 'like', "%{$search}%");
                 });
             })
-            ->latest()
-            ->paginate(8)
+            ->when(
+                $request->string('sort')->toString() === 'price_asc',
+                fn (Builder $query): Builder => $query->orderBy('price'),
+                fn (Builder $query): Builder => $query
+            )
+            ->when(
+                $request->string('sort')->toString() === 'price_desc',
+                fn (Builder $query): Builder => $query->orderByDesc('price'),
+                fn (Builder $query): Builder => $query
+            )
+            ->when(
+                $request->string('sort')->toString() === 'best_selling',
+                fn (Builder $query): Builder => $query->orderByDesc(DB::raw('COALESCE(units_sold, 0)'))->latest(),
+                fn (Builder $query): Builder => $query
+            )
+            ->when(
+                ! in_array($request->string('sort')->toString(), ['price_asc', 'price_desc', 'best_selling'], true),
+                fn (Builder $query): Builder => $query->latest(),
+                fn (Builder $query): Builder => $query
+            )
+            ->paginate(12)
             ->withQueryString();
 
         return view('shop.index', [
-            'banners' => Banner::latest()->take(3)->get(),
             'brands' => Brand::orderBy('name')->get(),
             'categories' => Category::withCount('products')->orderBy('name')->get(),
-            'featuredProducts' => Product::active()->with(['primaryImage', 'brand'])->latest()->take(4)->get(),
             'products' => $products,
         ]);
     }

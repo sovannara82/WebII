@@ -1,4 +1,4 @@
-@extends('layouts.customer')
+@extends('layouts.app')
 
 @section('title', 'Profile - Infinity Figures')
 
@@ -19,7 +19,19 @@
 
                     <div class="profile-avatar">
                         @php
-                            $profileImage = $user->image ? (filter_var($user->image, FILTER_VALIDATE_URL) ? $user->image : asset('storage/'.$user->image)) : null;
+                            $profileImage = null;
+
+                            if (filled($user->image)) {
+                                if (Illuminate\Support\Str::startsWith($user->image, ['http://', 'https://', '/'])) {
+                                    $profileImage = $user->image;
+                                } elseif (Illuminate\Support\Str::startsWith($user->image, 'storage/')) {
+                                    $profileImage = asset($user->image);
+                                } else {
+                                    $profileImage = asset('storage/'.$user->image);
+                                }
+
+                                $profileImage .= (str_contains($profileImage, '?') ? '&' : '?').'v='.$user->updated_at?->timestamp;
+                            }
                         @endphp
                         @if ($profileImage)
                             <img src="{{ $profileImage }}" alt="{{ $user->name }}">

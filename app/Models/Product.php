@@ -101,6 +101,14 @@ class Product extends Model
     }
 
     /**
+     * @return HasMany<OrderItem>
+     */
+    public function orderItems(): HasMany
+    {
+        return $this->hasMany(OrderItem::class);
+    }
+
+    /**
      * @return HasMany<Wishlist>
      */
     public function wishlists(): HasMany
