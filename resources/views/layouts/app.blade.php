@@ -64,13 +64,19 @@
                         @guest
                             @if (Route::has('login'))
                                 <li class="nav-item">
-                                    <a class="nav-link" href="{{ route('login') }}">{{ __('Login') }}</a>
+                                    <a class="nav-link nav-auth-link nav-login-link" href="{{ route('login') }}">
+                                        <i class="bi bi-box-arrow-in-right"></i>
+                                        {{ __('Login') }}
+                                    </a>
                                 </li>
                             @endif
 
                             @if (Route::has('register'))
                                 <li class="nav-item">
-                                    <a class="nav-link" href="{{ route('register') }}">{{ __('Register') }}</a>
+                                    <a class="nav-link nav-auth-link nav-register-link" href="{{ route('register') }}">
+                                        <i class="bi bi-person-plus-fill"></i>
+                                        {{ __('Register') }}
+                                    </a>
                                 </li>
                             @endif
                         @else
@@ -81,7 +87,6 @@
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link cart-pill nav-counter" href="{{ route('cart.index') }}">
-                                    <i class="bi bi-bag"></i>
                                     Cart
                                 </a>
                             </li>
@@ -100,7 +105,7 @@
                                     $navProfileImage .= (str_contains($navProfileImage, '?') ? '&' : '?').'v='.Auth::user()->updated_at?->timestamp;
                                 }
                             @endphp
-                            <li class="nav-item dropdown">
+                            <li class="nav-item dropdown nav-account-dropdown">
                                 <a id="navbarDropdown" class="nav-link dropdown-toggle nav-profile-link" href="#" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" v-pre>
                                     <span class="nav-avatar">
                                         @if ($navProfileImage)
@@ -113,13 +118,15 @@
                                 </a>
 
                                 <div class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
-                                    <a class="dropdown-item" href="{{ route('profile.edit') }}">
+                                    <a class="dropdown-item nav-dropdown-action" href="{{ route('profile.edit') }}">
+                                        <i class="bi bi-person-gear"></i>
                                         {{ __('Profile') }}
                                     </a>
-                                    <a class="dropdown-item" href="{{ route('logout') }}"
+                                    <a class="dropdown-item nav-dropdown-action nav-logout-action" href="{{ route('logout') }}"
                                        onclick="event.preventDefault();
                                                      document.getElementById('logout-form').submit();">
-                                        {{ __('Logout') }}
+                                        <i class="bi bi-box-arrow-right"></i>
+                                        {{ __('Logout') }}  
                                     </a>
 
                                     <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
